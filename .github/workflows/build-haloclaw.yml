@@ -1,0 +1,76 @@
+name: Build HaloClaw
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/ui-tars/**'
+      - 'skills/**'
+      - '.github/workflows/build-haloclaw.yml'
+  workflow_dispatch:
+
+env:
+  CI: true
+  NODE_OPTIONS: --max-old-space-size=8192
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+        
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Build Windows
+        run: cd apps/ui-tars && pnpm run build:win32
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HaloClaw-Windows
+          path: |
+            apps/ui-tars/out/*.exe
+            apps/ui-tars/out/*.yml
+          retention-days: 30
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+        
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Build Linux
+        run: cd apps/ui-tars && pnpm run build:linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HaloClaw-Linux
+          path: |
+            apps/ui-tars/out/*.AppImage
+            apps/ui-tars/out/*.deb
+          retention-days: 30
